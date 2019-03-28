@@ -1,19 +1,8 @@
 var express = require('express');
 var multer = require('multer');
 var uuid = require('uuid/v1');
-var mysql = require('mysql')
+var sqlConnect = require('../dbconnect/index');
 var router = express.Router();
-
-// 创建连接
-let connection = mysql.createConnection({
-  host: '120.77.44.197',
-  user: 'root',
-  password: 'root',
-  database: 'testDatabase'
-})
-
-// 执行创建连接
-connection.connect();
 
 
 // 定制上传控件
@@ -32,28 +21,34 @@ var upload = multer({
   storage,
 })
 
+
 // 新增数据SQL语句
-var addSql = 'INSERT INTO uploadfiles(staticname, filename) VALUES(?, ?)';
+var addSql = 'INSERT INTO uploadfiles(staticname, filename, mime, size) VALUES(?, ?, ?, ?)';
 
 router.post('/', upload.single('file'), function (req, res, next) {
 
-  var addSqlParams = [req.file.filename, req.file.originalname];
-
+  var addSqlParams = [
+    req.file.filename,
+    req.file.originalname,
+    req.file.mimetype,
+    req.file.size
+  ];
+  
   // 执行数据库方法
-  connection.query(addSql, addSqlParams, (err, result) => {
-    if (err) {
-      res.json({
-        code: 0,
-        data: {},
-        msg: `error ${err.message}`
-      })
-    } else {
+  sqlConnect.query(addSql, addSqlParams, (err, result) => {
+    if (!err) {
       res.json({
         code: 0,
         data: {
           fliename: req.file.filename
         },
         msg: 'success'
+      })
+    } else {
+      res.json({
+        code: 0,
+        data: {},
+        msg: `error ${err.message}`
       })
     }
     res.end()
