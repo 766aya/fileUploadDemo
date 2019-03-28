@@ -10,11 +10,11 @@ router.delete('/:id', function (req, res, next) {
   let id = req.params.id
   new Promise((resolve, reject) => { // 查询记录
     sqlConnect.query(queryOneSql, [id], (err, result) => {
-      if (!err) {
+      if (err || result.length === 0) {
+        reject(err)
+      } else {
         let dataObj = result[0]
         resolve(dataObj)
-      } else {
-        reject(err)
       }
     })
   }).then(result => { // 删除记录
