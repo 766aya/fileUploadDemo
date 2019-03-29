@@ -1,8 +1,7 @@
 var express = require('express');
-var sqlConnect = require('../dbconnect/index');
 var router = express.Router();
 
-var querySql = 'SELECT * FROM uploadfiles WHERE staticname = ?'
+var sqlConnect = require('../util/sql')
 
 router.get('/', function (req, res, next) {
   if (!req.query.filename) {
@@ -13,19 +12,21 @@ router.get('/', function (req, res, next) {
     })
     return res.end()
   }
+  
   let filename = req.query.filename
-  sqlConnect.query(querySql, [filename], (err, result)=>{
-    if(err || result.length===0) {
+
+  new sqlConnect()
+    .queryByStaticname(filename)
+    .then((result)=>{
+      res.download(`./static/${ filename }`, result.filename)
+    }).catch((err) => {
       res.json({
         code: 0,
         data: false,
-        msg: `downloadFileError ${err || 'not found file!'}`
+        msg: `downloadFileError ${ err }`
       })
       res.end()
-    } else {
-      res.download(`./static/${filename}`, result[0].filename)
-    }
-  })
+    })
 })
 
 module.exports = router;
